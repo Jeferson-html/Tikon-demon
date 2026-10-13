@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tikon / TerraBytes - Demostración IoT Integral & Financiera</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #1a1e24; color: #ffffff; margin: 0; padding: 15px; }
+        
+        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #2e3542; padding-bottom: 10px; }
+        header h1 { color: #4caf50; margin: 0; font-size: 24px; }
+        header p { color: #a0aab8; margin-top: 5px; font-size: 14px; }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 900px) {
+            .main-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+        }
+
+        .card {
+            background-color: #242a35;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card h2 { color: #81c784; font-size: 18px; margin-top: 0; border-bottom: 1px solid #333a48; padding-bottom: 8px; }
+
+        /* Módulo 1: Planta y Simulador IoT */
+        .planta-box { font-size: 55px; text-align: center; margin: 5px 0; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; margin-bottom: 10px; text-align: center; width: 100%; }
+        .humedad-meter { background-color: #1a1e24; border-radius: 10px; padding: 10px; margin-top: 10px; }
+        .bar-container { background-color: #333a48; border-radius: 8px; height: 14px; width: 100%; overflow: hidden; margin-top: 5px; }
+        .bar-fill { height: 100%; width: 55%; background-color: #4caf50; transition: width 0.4s ease, background-color 0.4s ease; }
+
+        /* Panel de Estado y LED Virtual */
+        .chip-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #14171d;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            border: 1px solid #333a48;
+        }
+        .virtual-led {
+            width: 12px; height: 12px; border-radius: 50%;
+            background-color: #4caf50; display: inline-block;
+            box-shadow: 0 0 8px #4caf50; transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .btn-grupo { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+        .btn-escenario {
+            padding: 8px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: white;
+            text-align: left; display: flex; justify-content: space-between; align-items: center;
+        }
+        .btn-sequia { background-color: #e53935; }
+        .btn-optimo { background-color: #4caf50; }
+        .btn-exceso { background-color: #00acc1; }
+        .btn-iot { background-color: #7c4dff; margin-bottom: 8px; }
+        .btn-escenario:hover, .btn-iot:hover { opacity: 0.9; }
+
+        /* Ensamblador Interactivo de Hardware */
+        .assembly-area {
+            background-color: #14171d;
+            border: 2px dashed #333a48;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .workbench {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+            background-color: #1a1e24;
+            padding: 6px;
+            border-radius: 6px;
+        }
+        .draggable-piece {
+            background-color: #2e3542;
+            border: 1px solid #4caf50;
+            color: #ffffff;
+            padding: 5px 8px;
+            border-radius: 6px;
+            cursor: grab;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+            touch-action: none;
+        }
+        .draggable-piece:active { cursor: grabbing; opacity: 0.8; }
+        .pcb-target {
+            background-color: #0f2b1d;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            min-height: 80px;
+            padding: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-content: flex-start;
+        }
+        .pcb-target::before {
+            content: "📍 Placa Base (Arrastra las piezas aquí)";
+            color: #4caf50;
+            font-size: 10px;
+            width: 100%;
+            font-weight: bold;
+        }
+        .success-banner {
+            display: none;
+            background-color: #1b5e20;
+            color: #a3e4d7;
+            padding: 5px;
+            border-radius: 6px;
+            font-size: 11px;
+            text-align: center;
+            margin-top: 6px;
+            font-weight: bold;
+            border: 1px solid #4caf50;
+        }
+
+        /* Minigráfica de Historial */
+        .chart-container {
+            background-color: #14171d;
+            border: 1px solid #333a48;
+            border-radius: 6px;
+            padding: 8px;
+            margin-top: 10px;
+        }
+
+        /* Módulo 2: Alertas AgroVoice y Solución a Insumos */
+        .perfil-info { background-color: #14171d; padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
+        .perfil-info p { margin: 3px 0; }
+        
+        select, button { width: 100%; padding: 9px; margin-top: 6px; border-radius: 6px; border: none; font-size: 13px; font-weight: bold; cursor: pointer; }
+        select { background-color: #333a48; color: white; border: 1px solid #4caf50; }
+        .btn-audio { background-color: #ff9800; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+        .btn-audio:hover { background-color: #f57c00; }
+        
+        .sms-mockup { background-color: #000; border: 2px solid #333a48; border-radius: 8px; padding: 10px; margin-top: 10px; }
+        .sms-bubble { background-color: #2196f3; color: white; padding: 8px; border-radius: 8px; font-size: 12px; line-height: 1.4; }
+
+        .alerta-box { color: white; padding: 10px; border-radius: 6px; text-align: center; margin-top: 10px; font-weight: bold; font-size: 12px; transition: background-color 0.3s; }
+        
+        /* Caja de Enlace con Insumos (Defensa ante inversionistas) */
+        .insumos-box {
+            background-color: #1c2331;
+            border-left: 4px solid #ff9800;
+            padding: 8px 10px;
+            border-radius: 0 6px 6px 0;
+            margin-top: 10px;
+            font-size: 11px;
+            color: #d0d7de;
+        }
+
+        /* Panel Financiero y ROI */
+        .roi-panel {
+            background-color: #14171d;
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        .roi-panel h4 { color: #81c784; margin: 0 0 5px 0; font-size: 12px; }
+
+        .json-preview {
+            background-color: #14171d; border: 1px solid #333a48; border-radius: 6px; padding: 6px;
+            font-family: monospace; font-size: 10px; color: #00e676; margin-top: 6px; white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>TIKON / TERRABYTES</h1>
+        <p>Demostración Integral: Hardware + Monitoreo IoT + Alertas AgroVoice + Viabilidad Financiera</p>
+    </header>
+
+    <div class="main-container">
+        
+        <!-- MÓDULO 1: HARDWARE Y MONITOREO -->
+        <div class="card">
+            <div>
+                <h2>1. Ensamblaje y Nodo IoT en Vivo</h2>
+                
+                <div class="chip-status-bar">
+                    <span id="netIndicator">📶 Red: Conectado a Servidor / 4G (Nube)</span>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 11px; color: #a0aab8;">ESP32 LED:</span>
+                        <div id="espLed" class="virtual-led"></div>
+                    </div>
+                </div>
+
+                <div class="assembly-area">
+                    <div class="workbench" id="workbench" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div class="draggable-piece" draggable="true" ondragstart="drag(event)" id="pieza_esp32">🎛️ ESP32</div>
+                        <div class="draggable-piece" draggable="true" ondragstart="drag(event)" id="pieza_sensor">🌱 Sensor Humedad</div>
+                        <div class="draggable-piece" draggable="true" ondragstart="drag(event)" id="pieza_panel">☀️ Panel Solar</div>
+                        <div class="draggable-piece" draggable="true" ondragstart="drag(event)" id="pieza_bateria">🔋 Batería</div>
+                        <div class="draggable-piece" draggable="true" ondragstart="drag(event)" id="pieza_radio">📡 Módulo LoRa</div>
+                    </div>
+                    <div class="pcb-target" id="pcbBoard" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div id="successBanner" class="success-banner">
+                        🟢 Sistema Hardware Verificado: Circuito Listo para Desplegar (Q350 - Q450)[cite: 4, 6]
+                    </div>
+                    <button style="background-color: #333a48; color: #a0aab8; font-size: 10px; padding: 3px; margin-top: 5px;" onclick="reiniciarEnsamblaje()">
+                        ↺ Reiniciar Piezas
+                    </button>
+                </div>
+
+                <button class="btn-escenario btn-iot" onclick="toggleSimulacionIoT()" id="btnIotToggle" style="margin-top: 10px;">
+                    <span>🔌 Conectar ESP32 (Simulación Automática)</span> <small id="iotStatus">DESACTIVADO</small>
+                </button>
+
+                <div id="statusBadge" class="status-badge" style="background-color: #4caf50; margin-top: 8px;">
+                    ESTADO: ÓPTIMO
+                </div>
+
+                <div id="plantaEmoji" class="planta-box">🌿</div>
+
+                <p id="descripcionEstado" style="font-size: 12px; color: #d0d7de; text-align: center; margin: 4px 0;">El suelo tiene niveles ideales de humedad. La planta absorbe nutrientes adecuadamente.</p>
+
+                <div class="humedad-meter">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                        <span>Humedad del Suelo:</span>
+                        <strong id="textoHumedad">55%</strong>
+                    </div>
+                    <div class="bar-container">
+                        <div id="barFill" class="bar-fill"></div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #a0aab8; margin-bottom: 4px;">
+                        <span>Historial de Humedad (Lecturas en tiempo real):</span>
+                        <span id="chartVal">55%</span>
+                    </div>
+                    <svg height="30" width="100%" style="overflow: visible;">
+                        <polyline id="historyLine" fill="none" stroke="#00e676" stroke-width="2" points="0,20 100,18 200,20 300,12 400,15" />
+                    </svg>
+                </div>
+
+                <div class="btn-grupo" style="margin-top: 8px;">
+                    <small style="color: #a0aab8;">Forzar escenarios manuales:</small>
+                    <button class="btn-escenario btn-sequia" onclick="cambiarEscenarioManual('sequia')">
+                        <span>🌵 Sequía Crítica</span> <small>12%</small>
+                    </button>
+                    <button class="btn-escenario btn-optimo" onclick="cambiarEscenarioManual('optimo')">
+                        <span>🌿 Humedad Óptima</span> <small>55%</small>
+                    </button>
+                    <button class="btn-escenario btn-exceso" onclick="cambiarEscenarioManual('exceso')">
+                        <span>🌊 Exceso de Agua</span> <small>90%</small>
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-top: 8px;">
+                <small style="color: #a0aab8;">Trama JSON del ESP32:</small>
+                <div id="jsonDisplay" class="json-preview">{
+  "dispositivo_id": "ESP32_TIKON_01",
+  "lecturas": {
+    "humedad_suelo_porcentaje": 55,
+    "temperatura_celsius": 24.5
+  },
+  "estado": "OPTIMO"
+}</div>
+            </div>
+        </div>
+
+        <!-- MÓDULO 2: ALERTAS AGROVOICE, ACCESO A INSUMOS Y ROI -->
+        <div class="card">
+            <div>
+                <h2>2. Alertas Inclusivas (AgroVoice) y Viabilidad</h2>
+                
+                <div class="perfil-info">
+                    <p><strong>Agricultor:</strong> Don Mateo Tz'un</p>
+                    <p><strong>Ubicación:</strong> Paraje El Altillo, Guatemala</p>
+                    <p><strong>Teléfono:</strong> +502 5555-0192 (Básico)</p>
+                </div>
+
+                <label style="font-size: 12px;" for="selectIdioma"><strong>Seleccionar Idioma Maya:</strong></label>
+                <select id="selectIdioma" onchange="actualizarAlertas()">
+                    <option value="kaqchikel">Kaqchikel</option>
+                    <option value="kiche">K'iche'</option>
+                    <option value="qeqchi">Q'eqchi'</option>
+                    <option value="mam">Mam</option>
+                </select>
+
+                <div id="alertaBox" class="alerta-box" style="background-color: #4caf50;">
+                    🌿 ESTADO ÓPTIMO: SUELO CON HUMEDAD IDEAL
+                </div>
+
+                <!-- CAJA DE SOLUCIÓN A INSUMOS (Defensa ante inversionistas) -->
+                <div class="insumos-box">
+                    <strong>🤝 Alianza con Cooperativa Local:</strong> 
+                    <span id="insumoTexto">El sistema enlaza automáticamente la alerta con la cooperativa para despacho inmediato de insumos de riego si se requiere.</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <button class="btn-audio" onclick="reproducirAudio()">
+                    <span>🔊</span> <span id="btnTextoAudio">Escuchar Nota de Voz (Kaqchikel)</span>
+                </button>
+
+                <div class="sms-mockup">
+                    <small style="color: #a0aab8;">Vista Previa SMS en Teléfono Básico:</small>
+                    <div style="margin-top: 4px;" class="sms-bubble" id="smsTexto">
+                        [Tikon Info]: Ri ulew utz k'o. El cultivo tiene agua suficiente.
+                    </div>
+                </div>
+
+                <!-- PANEL FINANCIERO Y ROI -->
+                <div class="roi-panel">
+                    <h4>📊 Resumen Financiero y de Impacto (Año 1)</h4>
+                    <p style="margin: 2px 0; color: #a0aab8;">• <strong>Costo del Kit:</strong> Q350 - Q450 (Margen ~30%)[cite: 3, 4, 6]</p>
+                    <p style="margin: 2px 0; color: #a0aab8;">• <strong>Modelo de Ingresos:</strong> Venta de hardware + Suscripción por cosecha[cite: 3, 4]</p>
+                    <p style="margin: 2px 0; color: #a0aab8;">• <strong>Impacto Directo:</strong> +40% de productividad y reducción de pérdidas[cite: 12, 15]</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function allowDrop(ev) { ev.preventDefault(); }
+        function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+        
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            
+            if (ev.target.id === "pcbBoard" || ev.target.id === "workbench") {
+                ev.target.appendChild(draggedElement);
+            } else if (ev.target.closest('#pcbBoard')) {
+                document.getElementById('pcbBoard').appendChild(draggedElement);
+            } else if (ev.target.closest('#workbench')) {
+                document.getElementById('workbench').appendChild(draggedElement);
+            }
+            verificarEnsamblaje();
+        }
+
+        function verificarEnsamblaje() {
+            const piezas = ['pieza_esp32', 'pieza_sensor', 'pieza_panel', 'pieza_bateria', 'pieza_radio'];
+            let completado = true;
+            piezas.forEach(id => {
+                if (!document.getElementById(id).closest('#pcbBoard')) completado = false;
+            });
+            document.getElementById('successBanner').style.display = completado ? 'block' : 'none';
+        }
+
+        function reiniciarEnsamblaje() {
+            const workbench = document.getElementById('workbench');
+            const piezas = ['pieza_esp32', 'pieza_sensor', 'pieza_panel', 'pieza_bateria', 'pieza_radio'];
+            piezas.forEach(id => {
+                const p = document.getElementById(id);
+                if (p) workbench.appendChild(p);
+            });
+            document.getElementById('successBanner').style.display = 'none';
+        }
+
+        const baseDatos = {
+            sequia: {
+                humedad: 12,
+                temp: 32.4,
+                estadoTexto: "SEQUIA_CRITICA",
+                badgeColor: "#e53935",
+                badgeText: "ALERTA: SEQUÍA CRÍTICA",
+                emoji: "🥀",
+                desc: "El suelo está severamente seco. La planta sufre estrés hídrico y requiere riego urgente.",
+                alertaColor: "#e53935",
+                alertaTitulo: "🚨 ACCIÓN REQUERIDA: SUELO SECO",
+                netText: "📡 Sin Internet - Activando Protocolo SMS de Emergencia (LoRa)",
+                netColor: "#ff9800",
+                ledColor: "#e53935",
+                insumoAlerta: "⚠️ ALERTA ENVIADA A LA COOPERATIVA: Solicitud prioritaria de pipa/riego para Paraje El Altillo.",
+                kaqchikel: { btn: "Escuchar Nota de Voz (Kaqchikel)", sms: "[Tikon Alert]: Ri ulew k'o rajawaxik ya'. Riego urgente en Paraje El Altillo.", voz: "Ri ulew k'o rajawaxik ya'" },
+                kiche: { btn: "Escuchar Nota de Voz (K'iche')", sms: "[Tikon Alert]: Ri ulew rajawaxik ya'. Riego urgente en Paraje El Altillo.", voz: "Ri ulew rajawaxik ya'" },
+                qeqchi: { btn: "Escuchar Nota de Voz (Q'eqchi')", sms: "[Tikon Alert]: Li ch'och' tz'aqal rajawbal ha'. Riego urgente en Paraje El Altillo.", voz: "Li ch'och' tz'aqal rajawbal ha'" },
+                mam: { btn: "Escuchar Nota de Voz (Mam)", sms: "[Tikon Alert]: At tx'otx' taj a'. Riego urgente en Paraje El Altillo.", voz: "At tx'otx' taj a'" }
+            },
+            optimo: {
+                humedad: 55,
+                temp: 24.5,
+                estadoTexto: "OPTIMO",
+                badgeColor: "#4caf50",
+                badgeText: "ESTADO: ÓPTIMO",
+                emoji: "🌿",
+                desc: "El suelo tiene niveles ideales de humedad. La planta absorbe nutrientes adecuadamente.",
+                alertaColor: "#4caf50",
+                alertaTitulo: "🌿 ESTADO ÓPTIMO: HUMEDAD ADECUADA",
+                netText: "📶 Red: Conectado a Servidor / 4G (Nube)",
+                netColor: "#4caf50",
+                ledColor: "#4caf50",
+                insumoAlerta: "✅ Estado normal: Sin requerimientos adicionales de insumos en parcela.",
+                kaqchikel: { btn: "Escuchar Nota de Voz (Kaqchikel)", sms: "[Tikon Info]: Ri ulew utz k'o. El cultivo tiene agua suficiente.", voz: "Ri ulew utz k'o" },
+                kiche: { btn: "Escuchar Nota de Voz (K'iche')", sms: "[Tikon Info]: Ri ulew utz k'olic. El cultivo tiene agua suficiente.", voz: "Ri ulew utz k'olic" },
+                qeqchi: { btn: "Escuchar Nota de Voz (Q'eqchi')", sms: "[Tikon Info]: Li ch'och' chaab'il. El cultivo tiene agua suficiente.", voz: "Li ch'och' chaab'il" },
+                mam: { btn: "Escuchar Nota de Voz (Mam)", sms: "[Tikon Info]: At tx'otx' ba'n. El cultivo tiene agua suficiente.", voz: "At tx'otx' ba'n" }
+            },
+            exceso: {
+                humedad: 90,
+                temp: 21.0,
+                estadoTexto: "EXCESO_AGUA",
+                badgeColor: "#00acc1",
+                badgeText: "RANGO ALTO: EXCESO DE AGUA",
+                emoji: "🌱",
+                desc: "El suelo está saturado. Hay riesgo de proliferación de hongos o asfixia radicular.",
+                alertaColor: "#00acc1",
+                alertaTitulo: "🌊 PRECAUCIÓN: EXCESO DE AGUA EN SUELO",
+                netText: "📶 Red: Conectado a Servidor / 4G (Nube)",
+                netColor: "#4caf50",
+                ledColor: "#00acc1",
+                insumoAlerta: "ℹ️ Aviso de Cooperativa: Suelo con alta retención hídrica, suspender aplicación de fertilizante líquido.",
+                kaqchikel: { btn: "Escuchar Nota de Voz (Kaqchikel)", sms: "[Tikon Alerta]: K'i ya' k'o chupan ri ulew. Evitar riego.", voz: "K'i ya' k'o chupan ri ulew" },
+                kiche: { btn: "Escuchar Nota de Voz (K'iche')", sms: "[Tikon Alerta]: K'i ya' k'o pa ri ulew. Evitar riego.", voz: "K'i ya' k'o pa ri ulew" },
+                qeqchi: { btn: "Escuchar Nota de Voz (Q'eqchi')", sms: "[Tikon Alerta]: K'i ha' sa' li ch'och'. Evitar riego.", voz: "K'i ha' sa' li ch'och'" },
+                mam: { btn: "Escuchar Nota de Voz (Mam)", sms: "[Tikon Alerta]: Nim a' at tz'in tx'otx'. Evitar riego.", voz: "Nim a' at tz'in tx'otx'" }
+            }
+        };
+
+        let estadoActual = 'optimo';
+        let intervaloIoT = null;
+
+        function aplicarDatos(tipo) {
+            estadoActual = tipo;
+            const data = baseDatos[tipo];
+
+            document.getElementById('statusBadge').style.backgroundColor = data.badgeColor;
+            document.getElementById('statusBadge').textContent = data.badgeText;
+            document.getElementById('plantaEmoji').textContent = data.emoji;
+            document.getElementById('descripcionEstado').textContent = data.desc;
+            document.getElementById('textoHumedad').textContent = data.humedad + '%';
+            document.getElementById('barFill').style.width = data.humedad + '%';
+            document.getElementById('barFill').style.backgroundColor = data.badgeColor;
+
+            const netInd = document.getElementById('netIndicator');
+            netInd.textContent = data.netText;
+            netInd.style.color = data.netColor;
+
+            const led = document.getElementById('espLed');
+            led.style.backgroundColor = data.ledColor;
+            led.style.boxShadow = `0 0 10px ${data.ledColor}`;
+
+            document.getElementById('chartVal').textContent = data.humedad + '%';
+            const yPos = 30 - (data.humedad * 0.25);
+            document.getElementById('historyLine').setAttribute('points', `0,20 100,18 200,22 300,${yPos} 400,${yPos}`);
+
+            document.getElementById('insumoTexto').textContent = data.insumoAlerta;
+
+            const jsonObjeto = {
+                dispositivo_id: "ESP32_TIKON_01",
+                lecturas: {
+                    humedad_suelo_porcentaje: data.humedad,
+                    temperatura_celsius: data.temp
+                },
+                estado: data.estadoTexto,
+                timestamp: new Date().toISOString()
+            };
+            document.getElementById('jsonDisplay').textContent = JSON.stringify(jsonObjeto, null, 2);
+
+            actualizarAlertas();
+        }
+
+        function cambiarEscenarioManual(tipo) {
+            if (intervaloIoT) toggleSimulacionIoT();
+            aplicarDatos(tipo);
+        }
+
+        function toggleSimulacionIoT() {
+            const statusLabel = document.getElementById('iotStatus');
+            const btnToggle = document.getElementById('btnIotToggle');
+
+            if (intervaloIoT) {
+                clearInterval(intervaloIoT);
+                intervaloIoT = null;
+                statusLabel.textContent = "DESACTIVADO";
+                btnToggle.style.backgroundColor = "#7c4dff";
+            } else {
+                statusLabel.textContent = "EN VIVO 🟢";
+                btnToggle.style.backgroundColor = "#00c853";
+                
+                const secuencia = ['optimo', 'sequia', 'exceso'];
+                let index = 0;
+                
+                intervaloIoT = setInterval(() => {
+                    index = (index + 1) % secuencia.length;
+                    aplicarDatos(secuencia[index]);
+                }, 3500);
+            }
+        }
+
+        function actualizarAlertas() {
+            const idioma = document.getElementById('selectIdioma').value;
+            const data = baseDatos[estadoActual];
+            const dataIdioma = data[idioma];
+
+            const alertaBox = document.getElementById('alertaBox');
+            alertaBox.style.backgroundColor = data.alertaColor;
+            alertaBox.textContent = data.alertaTitulo;
+
+            document.getElementById('btnTextoAudio').textContent = dataIdioma.btn;
+            document.getElementById('smsTexto').textContent = dataIdioma.sms;
+        }
+
+        function reproducirAudio() {
+            const idioma = document.getElementById('selectIdioma').value;
+            const textoVoz = baseDatos[estadoActual][idioma].voz;
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(textoVoz);
+                utterance.lang = 'es-GT';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("Reproduciendo audio...");
+            }
+        }
+    </script>
+</body>
+</html>
